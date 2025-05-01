@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Police Records</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 1rem;
+    }
+    .card {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    .card img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.25rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Police Records Dashboard</h1>
+
+  <div class="card">
+    <div class="form-group">
+      <label for="type">Type</label>
+      <select id="type">
+        <option value="arrest">Arrest</option>
+        <option value="citation">Citation</option>
+        <option value="warrant">Warrant</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="name">Name</label>
+      <input type="text" id="name" />
+    </div>
+    <div class="form-group">
+      <label for="reason">Reason</label>
+      <input type="text" id="reason" />
+    </div>
+    <div class="form-group">
+      <label for="mugshot">Mugshot URL (optional)</label>
+      <input type="text" id="mugshot" />
+    </div>
+    <button onclick="addRecord()">Add Record</button>
+  </div>
+
+  <div id="records"></div>
+
+  <script>
+    let user = localStorage.getItem("user");
+    if (!user) {
+      user = prompt("Enter your name to log in:");
+      localStorage.setItem("user", user);
+    }
+
+    function loadRecords() {
+      const records = JSON.parse(localStorage.getItem("policeRecords") || "[]");
+      const container = document.getElementById("records");
+      container.innerHTML = "";
+
+      records.forEach(record => {
+        const div = document.createElement("div");
+        div.className = "card";
+
+        div.innerHTML = `
+          ${record.mugshotUrl ? `<img src="${record.mugshotUrl}" alt="Mugshot">` : ""}
+          <p><strong>${record.type.toUpperCase()}</strong></p>
+          <p>Name: ${record.name}</p>
+          <p>Reason: ${record.reason}</p>
+          <p><em>Added by ${record.addedBy}</em></p>
+        `;
+
+        container.appendChild(div);
+      });
+    }
+
+    function addRecord() {
+      const type = document.getElementById("type").value;
+      const name = document.getElementById("name").value;
+      const reason = document.getElementById("reason").value;
+      const mugshotUrl = document.getElementById("mugshot").value;
+
+      const newRecord = {
+        id: Date.now(),
+        type,
+        name,
+        reason,
+        mugshotUrl,
+        addedBy: user
+      };
+
+      const records = JSON.parse(localStorage.getItem("policeRecords") || "[]");
+      records.unshift(newRecord);
+      localStorage.setItem("policeRecords", JSON.stringify(records));
+
+      document.getElementById("name").value = "";
+      document.getElementById("reason").value = "";
+      document.getElementById("mugshot").value = "";
+
+      loadRecords();
+    }
+
+    loadRecords();
+  </script>
+</body>
+</html>

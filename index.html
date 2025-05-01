@@ -33,6 +33,74 @@
       margin-top: 0.25rem;
     }
   </style>
+  <script type="module">
+    // Firebase SDK
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCQ0U4AtatfriOyrwkUVnX9lu39QMt7Psg",
+      authDomain: "police-records-c55c0.firebaseapp.com",
+      projectId: "police-records-c55c0",
+      storageBucket: "police-records-c55c0.firebasestorage.app",
+      messagingSenderId: "78724104060",
+      appId: "1:78724104060:web:0cb77d895747768910aef9"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let user = localStorage.getItem("user");
+    if (!user) {
+      user = prompt("Enter your name to log in:");
+      localStorage.setItem("user", user);
+    }
+
+    async function loadRecords() {
+      const container = document.getElementById("records");
+      container.innerHTML = "";
+      const q = query(collection(db, "records"), orderBy("timestamp", "desc"));
+      onSnapshot(q, (querySnapshot) => {
+        container.innerHTML = "";
+        querySnapshot.forEach((doc) => {
+          const record = doc.data();
+          const div = document.createElement("div");
+          div.className = "card";
+          div.innerHTML = `
+            ${record.mugshotUrl ? `<img src="${record.mugshotUrl}" alt="Mugshot">` : ""}
+            <p><strong>${record.type.toUpperCase()}</strong></p>
+            <p>Name: ${record.name}</p>
+            <p>Reason: ${record.reason}</p>
+            <p><em>Added by ${record.addedBy}</em></p>
+          `;
+          container.appendChild(div);
+        });
+      });
+    }
+
+    async function addRecord() {
+      const type = document.getElementById("type").value;
+      const name = document.getElementById("name").value;
+      const reason = document.getElementById("reason").value;
+      const mugshotUrl = document.getElementById("mugshot").value;
+
+      await addDoc(collection(db, "records"), {
+        type,
+        name,
+        reason,
+        mugshotUrl,
+        addedBy: user,
+        timestamp: new Date()
+      });
+
+      document.getElementById("name").value = "";
+      document.getElementById("reason").value = "";
+      document.getElementById("mugshot").value = "";
+    }
+
+    window.addRecord = addRecord;
+    loadRecords();
+  </script>
 </head>
 <body>
   <h1>Police Records Dashboard</h1>
@@ -62,62 +130,5 @@
   </div>
 
   <div id="records"></div>
-
-  <script>
-    let user = localStorage.getItem("user");
-    if (!user) {
-      user = prompt("Enter your name to log in:");
-      localStorage.setItem("user", user);
-    }
-
-    function loadRecords() {
-      const records = JSON.parse(localStorage.getItem("policeRecords") || "[]");
-      const container = document.getElementById("records");
-      container.innerHTML = "";
-
-      records.forEach(record => {
-        const div = document.createElement("div");
-        div.className = "card";
-
-        div.innerHTML = `
-          ${record.mugshotUrl ? `<img src="${record.mugshotUrl}" alt="Mugshot">` : ""}
-          <p><strong>${record.type.toUpperCase()}</strong></p>
-          <p>Name: ${record.name}</p>
-          <p>Reason: ${record.reason}</p>
-          <p><em>Added by ${record.addedBy}</em></p>
-        `;
-
-        container.appendChild(div);
-      });
-    }
-
-    function addRecord() {
-      const type = document.getElementById("type").value;
-      const name = document.getElementById("name").value;
-      const reason = document.getElementById("reason").value;
-      const mugshotUrl = document.getElementById("mugshot").value;
-
-      const newRecord = {
-        id: Date.now(),
-        type,
-        name,
-        reason,
-        mugshotUrl,
-        addedBy: user
-      };
-
-      const records = JSON.parse(localStorage.getItem("policeRecords") || "[]");
-      records.unshift(newRecord);
-      localStorage.setItem("policeRecords", JSON.stringify(records));
-
-      document.getElementById("name").value = "";
-      document.getElementById("reason").value = "";
-      document.getElementById("mugshot").value = "";
-
-      loadRecords();
-    }
-
-    loadRecords();
-  </script>
 </body>
 </html>
